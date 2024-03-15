@@ -9,7 +9,12 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-func createQueue(ch *amqp.Channel) {
+type Producer struct {
+	Channel *amqp.Channel
+	Queue   amqp.Queue
+}
+
+func NewProducer(ch *amqp.Channel) *Producer {
 	q, err := ch.QueueDeclare(
 		"hello", // name
 		true,    // durable
@@ -18,35 +23,27 @@ func createQueue(ch *amqp.Channel) {
 		false,   // no-wait
 		nil,     // arguments
 	)
-	utils.FailOnError(err, "Failed to open a channel")
+	utils.FailOnError(err, "Failed to declare a queue")
 
+	return &Producer{
+		Channel: ch,
+		Queue:   q,
+	}
+}
+
+func (p *Producer) Publish(body string) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	body := "Hello World!"
-	err = ch.PublishWithContext(ctx,
-		"",     // exchange
-		q.Name, // routing key
-		false,  // mandatory
-		false,  // immediate
+	err := p.Channel.PublishWithContext(ctx,
+		"",           // exchange
+		p.Queue.Name, // routing key
+		false,        // mandatory
+		false,        // immediate
 		amqp.Publishing{
 			ContentType: "text/plain",
 			Body:        []byte(body),
 		})
 	utils.FailOnError(err, "Failed to publish a message")
 	log.Printf(" [x] Sent %s\n", body)
-
-}
-func createChannel(conn *amqp.Connection) {
-	ch, err := conn.Channel()
-	utils.FailOnError(err, "Failed to open a channel")
-	defer ch.Close()
-}
-func ConnectRabbitMQ(connString string) (*amqp.Connection, error) {
-	conn, err := amqp.Dial(connString)
-	if err != nil {
-		return nil, err
-	}
-	createChannel(conn)
-	return conn, nil
 }

@@ -10,12 +10,12 @@ import (
 func main() {
 
 	config, err := utils.LoadConfig(".")
-	if err != nil {
-		log.Fatal("cannot load config file", err)
-	}
+	utils.FailOnError(err, "cannot load config file")
 	conn, err := rabbitmq.ConnectRabbitMQ(config.RABBITMQ_CONN)
-	if err != nil {
-		log.Fatal("cannot connect to rabbitmq", err)
-	}
+	utils.FailOnError(err, "cannot connect to rabbitmq")
 	_ = conn
+	defer func() {
+		conn.Close()
+		log.Println("RabbitMQ connection closed")
+	}()
 }
