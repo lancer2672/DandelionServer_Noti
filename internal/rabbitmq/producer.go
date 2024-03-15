@@ -14,17 +14,7 @@ type Producer struct {
 	Queue   amqp.Queue
 }
 
-func NewProducer(ch *amqp.Channel) *Producer {
-	q, err := ch.QueueDeclare(
-		"hello", // name
-		true,    // durable
-		false,   // delete when unused
-		false,   // exclusive
-		false,   // no-wait
-		nil,     // arguments
-	)
-	utils.FailOnError(err, "Failed to declare a queue")
-
+func NewProducer(ch *amqp.Channel, q amqp.Queue) *Producer {
 	return &Producer{
 		Channel: ch,
 		Queue:   q,

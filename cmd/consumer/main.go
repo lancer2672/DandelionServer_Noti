@@ -1,3 +1,4 @@
+// cmd/consumer/main.go
 package main
 
 import (
@@ -8,13 +9,19 @@ import (
 )
 
 func main() {
-
 	config, err := utils.LoadConfig(".")
 	utils.FailOnError(err, "cannot load config file")
-	conn, err := rabbitmq.ConnectRabbitMQ(config.RABBITMQ_CONN)
-	utils.FailOnError(err, "cannot connect to rabbitmq")
-	_ = conn
+	conn := rabbitmq.ConnectRabbitMQ(config.RABBITMQ_CONN)
+
+	ch, err := conn.Channel()
+	utils.FailOnError(err, "failed to open a channel")
+
+	q := rabbitmq.CreateQueue(ch, "hello")
+
+	consumer := rabbitmq.NewConsumer(ch, q)
+	consumer.Consume()
 	defer func() {
+		ch.Close()
 		conn.Close()
 		log.Println("RabbitMQ connection closed")
 	}()

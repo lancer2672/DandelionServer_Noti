@@ -13,17 +13,7 @@ type Consumer struct {
 	Queue   amqp.Queue
 }
 
-func NewConsumer(ch *amqp.Channel) *Consumer {
-	q, err := ch.QueueDeclare(
-		"hello", // name
-		true,    // durable
-		false,   // delete when unused
-		false,   // exclusive
-		false,   // no-wait
-		nil,     // arguments
-	)
-	utils.FailOnError(err, "Failed to declare a queue")
-
+func NewConsumer(ch *amqp.Channel, q amqp.Queue) *Consumer {
 	return &Consumer{
 		Channel: ch,
 		Queue:   q,
