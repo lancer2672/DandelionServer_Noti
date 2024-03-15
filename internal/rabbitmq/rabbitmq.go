@@ -5,16 +5,50 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-func CreateQueue(ch *amqp.Channel, name string) amqp.Queue {
+func CreateQueue(ch *amqp.Channel, queueName string) amqp.Queue {
 	q, err := ch.QueueDeclare(
-		name,  // name
-		true,  // durable
-		false, // delete when unused
-		false, // exclusive
-		false, // no-wait
-		nil,   // arguments
+		queueName, // name
+		true,      // durable
+		false,     // delete when unused
+		false,     // exclusive
+		false,     // no-wait
+		nil,       // arguments
 	)
 	utils.FailOnError(err, "Failed to open a channel")
+	return q
+}
+func CreateQueueWithTTL(channel *amqp.Channel, queueName string, msgTTL int64, dlxName string) amqp.Queue {
+	args := amqp.Table{}
+	args["x-message-ttl"] = msgTTL
+	args["x-dead-letter-exchange"] = dlxName // associate an DLX to the queue
+
+	q, err := channel.QueueDeclare(
+		queueName, // queue name
+		true,      // durable
+		false,     // auto delete
+		false,     // exclusive
+		false,     // no wait
+		args,      // arguments
+	)
+	utils.FailOnError(err, "Failed to create a queue")
+	return q
+}
+
+func CreateQueueWithDLX(channel *amqp.Channel, queueName, dlxName string) amqp.Queue {
+	args := amqp.Table{}
+
+	args["x-dead-letter-exchange"] = dlxName // associate an DLX to the queue
+
+	q, err := channel.QueueDeclare(
+		queueName, // queue name
+		true,      // durable
+		false,     // auto delete
+		false,     // exclusive
+		false,     // no wait
+		args,      // arguments
+	)
+	utils.FailOnError(err, "Failed to open a channel")
+
 	return q
 }
 func CreateChannel(conn *amqp.Connection) *amqp.Channel {

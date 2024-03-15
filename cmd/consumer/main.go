@@ -4,6 +4,7 @@ package main
 import (
 	"log"
 
+	"github.com/lancer2672/DandelionServer_Noti/constants"
 	"github.com/lancer2672/DandelionServer_Noti/internal/rabbitmq"
 	"github.com/lancer2672/DandelionServer_Noti/utils"
 )
@@ -16,10 +17,11 @@ func main() {
 	ch, err := conn.Channel()
 	utils.FailOnError(err, "failed to open a channel")
 
-	q := rabbitmq.CreateQueue(ch, "hello")
+	q := rabbitmq.CreateQueueWithTTL(ch, constants.NOTI_QUEUE_NAME, constants.TTL_VALUE, constants.DLX_EX_NAME)
 
 	consumer := rabbitmq.NewConsumer(ch, q)
 	consumer.Consume()
+
 	defer func() {
 		ch.Close()
 		conn.Close()
