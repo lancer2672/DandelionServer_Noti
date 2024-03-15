@@ -31,8 +31,9 @@ func (p *Producer) Publish(body string) {
 		false,        // mandatory
 		false,        // immediate
 		amqp.Publishing{
-			ContentType: "text/plain",
-			Body:        []byte(body),
+			DeliveryMode: amqp.Persistent,
+			ContentType:  "text/plain",
+			Body:         []byte(body),
 		})
 	utils.FailOnError(err, "Failed to publish a message")
 	log.Printf(" [x] Sent %s\n", body)
