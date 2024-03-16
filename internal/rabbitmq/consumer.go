@@ -24,7 +24,7 @@ func (c *Consumer) Consume() {
 	msgs, err := c.Channel.Consume(
 		c.Queue.Name, // queue
 		"",           // consumer
-		true,         // auto-ack
+		false,        // auto-ack
 		false,        // exclusive
 		false,        // no-local
 		false,        // no-wait
@@ -32,31 +32,23 @@ func (c *Consumer) Consume() {
 	)
 	utils.FailOnError(err, "Failed to register a consumer")
 
-	forever := make(chan bool)
 	go func() {
 		for d := range msgs {
-			log.Printf("Received a message: %s", d.Body)
-			// // Introduce an artificial error
-			// if string(d.Body) == "error" {
-			// 	log.Printf("Failed to process message: %s", d.Body)
-			// if err := d.Nack(false, false); err != nil {
-			// 		log.Printf("Failed to nack message: %s", err)
-			// 	}
-			// 	continue
-			// }
-
+			log.Printf(c.Queue.Name+" received a message: %s", d.Body)
+			// Introduce an artificial error
+			if string(d.Body) == "error" {
+				log.Printf("Failed to process message: %s", d.Body)
+				if err := d.Nack(false, false); err != nil {
+					log.Printf("Failed to nack message: %s", err)
+				}
+				continue
+			}
 			if err := d.Ack(false); err != nil {
 				log.Printf("Failed to acknowledge message: %s", err)
 			}
 		}
 	}()
-
-	go func() {
-		for msg := range c.Channel.NotifyReturn(make(chan amqp.Return)) {
-			log.Printf("Failed to deliver message: %s", msg.Body)
-		}
-	}()
-
-	log.Printf(" [*] Waiting for messages. To exit press CTRL+C")
-	<-forever
+	log.Printf(c.Queue.Name + " is waiting for messages...")
+	// Keep the consumer alive
+	select {}
 }

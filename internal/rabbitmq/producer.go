@@ -21,15 +21,15 @@ func NewProducer(ch *amqp.Channel, q amqp.Queue) *Producer {
 	}
 }
 
-func (p *Producer) Publish(body string) {
+func (p *Producer) Publish(body string, exchange string, routingKey string) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	err := p.Channel.PublishWithContext(ctx,
-		"",           // exchange
-		p.Queue.Name, // routing key
-		false,        // mandatory
-		false,        // immediate
+		exchange,   // exchange
+		routingKey, // routing key
+		false,      // mandatory
+		false,      // immediate
 		amqp.Publishing{
 			DeliveryMode: amqp.Persistent,
 			ContentType:  "text/plain",

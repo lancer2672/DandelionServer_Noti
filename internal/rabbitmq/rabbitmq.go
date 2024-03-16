@@ -17,10 +17,11 @@ func CreateQueue(ch *amqp.Channel, queueName string) amqp.Queue {
 	utils.FailOnError(err, "Failed to open a channel")
 	return q
 }
-func CreateQueueWithTTL(channel *amqp.Channel, queueName string, msgTTL int64, dlxName string) amqp.Queue {
+func CreateQueueWithTTL(channel *amqp.Channel, queueName string, msgTTL int64, dlxName string, routingKey string) amqp.Queue {
 	args := amqp.Table{}
 	args["x-message-ttl"] = msgTTL
-	args["x-dead-letter-exchange"] = dlxName // associate an DLX to the queue
+	args["x-dead-letter-exchange"] = dlxName // associate a DLX to the queue
+	args["x-dead-letter-routing-key"] = routingKey
 
 	q, err := channel.QueueDeclare(
 		queueName, // queue name
@@ -36,8 +37,6 @@ func CreateQueueWithTTL(channel *amqp.Channel, queueName string, msgTTL int64, d
 
 func CreateQueueWithDLX(channel *amqp.Channel, queueName, dlxName string) amqp.Queue {
 	args := amqp.Table{}
-
-	args["x-dead-letter-exchange"] = dlxName // associate an DLX to the queue
 
 	q, err := channel.QueueDeclare(
 		queueName, // queue name

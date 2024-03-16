@@ -19,7 +19,7 @@ func main() {
 
 	err = ch.ExchangeDeclare(
 		constants.DLX_EX_NAME, // name
-		"fanout",              // type
+		"direct",              // type
 		true,                  // durable
 		false,                 // auto-deleted
 		false,                 // internal
@@ -27,25 +27,30 @@ func main() {
 		nil,                   // arguments
 	)
 	utils.FailOnError(err, "create exchange failed")
+	err = ch.ExchangeDeclare(
+		constants.NOTIFICATION_EX_NAME, // name
+		"direct",                       // type
+		true,                           // durable
+		false,                          // auto-deleted
+		false,                          // internal
+		false,                          // no-wait
+		nil,                            // arguments
+	)
+	utils.FailOnError(err, "create exchange failed")
 
 	//  notification queue with TTL set, would be bind with queue_DLX through "dlx_exchange"
-	queue_TTL := rabbitmq.CreateQueueWithTTL(ch, constants.NOTI_QUEUE_NAME, constants.TTL_VALUE, constants.DLX_EX_NAME)
-	// dlx queue "dlx_exchange"
-	queue_DLX := rabbitmq.CreateQueueWithDLX(ch, constants.DLX_QUEUE_NAME, constants.DLX_EX_NAME)
+	queue_TTL := rabbitmq.CreateQueueWithTTL(ch, constants.NOTI_QUEUE_NAME, constants.TTL_VALUE, constants.DLX_EX_NAME, constants.DLX_ROUTING_KEY)
 	err = ch.QueueBind(
-		queue_DLX.Name, // queue name
-		// constants.DLX_ROUTING_KEY, // routing key
-		"",                    // routing key
-		constants.DLX_EX_NAME, // exchange
+		queue_TTL.Name,                     // queue name
+		constants.NOTIFICATION_ROUTING_KEY, // routing key
+		constants.NOTIFICATION_EX_NAME,     // exchange
 		false,
 		nil)
 	utils.FailOnError(err, "bind exchange dlx failed")
 
 	producer_TTL := rabbitmq.NewProducer(ch, queue_TTL)
 
-	producer_DLX := rabbitmq.NewProducer(ch, queue_DLX)
-	producer_TTL.Publish("error")
-	_ = producer_DLX
+	producer_TTL.Publish("erro1r", constants.NOTIFICATION_EX_NAME, constants.NOTIFICATION_ROUTING_KEY)
 	defer func() {
 		ch.Close()
 		conn.Close()

@@ -2,8 +2,6 @@
 package main
 
 import (
-	"log"
-
 	"github.com/lancer2672/DandelionServer_Noti/constants"
 	"github.com/lancer2672/DandelionServer_Noti/internal/rabbitmq"
 	"github.com/lancer2672/DandelionServer_Noti/utils"
@@ -17,14 +15,22 @@ func main() {
 	ch, err := conn.Channel()
 	utils.FailOnError(err, "failed to open a channel")
 
-	q := rabbitmq.CreateQueueWithTTL(ch, constants.NOTI_QUEUE_NAME, constants.TTL_VALUE, constants.DLX_EX_NAME)
+	queue_TTL := rabbitmq.CreateQueueWithTTL(ch, constants.NOTI_QUEUE_NAME, constants.TTL_VALUE, constants.DLX_EX_NAME, constants.DLX_ROUTING_KEY)
 
-	consumer := rabbitmq.NewConsumer(ch, q)
-	consumer.Consume()
+	queue_DLX := rabbitmq.CreateQueue(ch, constants.DLX_QUEUE_NAME)
+	err = ch.QueueBind(
+		queue_DLX.Name,            // queue name
+		constants.DLX_ROUTING_KEY, // routing key
+		constants.DLX_EX_NAME,     // exchange
+		false,
+		nil)
+	utils.FailOnError(err, "bind exchange dlx failed")
 
-	defer func() {
-		ch.Close()
-		conn.Close()
-		log.Println("RabbitMQ connection closed")
-	}()
+	consumer := rabbitmq.NewConsumer(ch, queue_TTL)
+	dlx_consumer := rabbitmq.NewConsumer(ch, queue_DLX)
+
+	forever := make(chan bool)
+	go consumer.Consume()
+	go dlx_consumer.Consume()
+	<-forever
 }
