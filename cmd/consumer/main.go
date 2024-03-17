@@ -3,6 +3,7 @@ package main
 
 import (
 	"github.com/lancer2672/DandelionServer_Noti/constants"
+	"github.com/lancer2672/DandelionServer_Noti/db"
 	"github.com/lancer2672/DandelionServer_Noti/internal/firebase"
 	"github.com/lancer2672/DandelionServer_Noti/internal/rabbitmq"
 	"github.com/lancer2672/DandelionServer_Noti/utils"
@@ -12,6 +13,8 @@ func main() {
 	config, err := utils.LoadConfig(".")
 	utils.FailOnError(err, "cannot load config file")
 	conn := rabbitmq.ConnectRabbitMQ(config.RABBITMQ_CONN)
+	db.Init(config.DB_SOURCE)
+
 	firebase.InitializeApp()
 
 	ch, err := conn.Channel()

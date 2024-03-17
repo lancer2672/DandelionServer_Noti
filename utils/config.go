@@ -4,6 +4,7 @@ import "github.com/spf13/viper"
 
 type Config struct {
 	RABBITMQ_CONN string `mapstructure:"RABBITMQ_CONN"`
+	DB_SOURCE     string `mapstructure:"DB_SOURCE"`
 }
 
 // overrided by env if exists
