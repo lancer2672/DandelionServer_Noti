@@ -2,6 +2,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/lancer2672/DandelionServer_Noti/constants"
@@ -50,7 +51,10 @@ func main() {
 
 	producer_TTL := rabbitmq.NewProducer(ch, queue_TTL)
 
-	producer_TTL.Publish("erro1r", constants.NOTIFICATION_EX_NAME, constants.NOTIFICATION_ROUTING_KEY)
+	for i := 0; i < 10; i++ {
+		message := fmt.Sprintf("Message %d", i+1)
+		producer_TTL.Publish(message, constants.NOTIFICATION_EX_NAME, constants.NOTIFICATION_ROUTING_KEY)
+	}
 	defer func() {
 		ch.Close()
 		conn.Close()
