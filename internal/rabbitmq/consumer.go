@@ -3,8 +3,6 @@ package rabbitmq
 
 import (
 	"log"
-	"math/rand"
-	"time"
 
 	"github.com/lancer2672/DandelionServer_Noti/utils"
 	amqp "github.com/rabbitmq/amqp091-go"
@@ -22,7 +20,9 @@ func NewConsumer(ch *amqp.Channel, q amqp.Queue) *Consumer {
 	}
 }
 
-func (c *Consumer) Consume() {
+type MessageHandler func(d amqp.Delivery, queueName string)
+
+func (c *Consumer) Consume(callback MessageHandler) {
 	msgs, err := c.Channel.Consume(
 		c.Queue.Name, // queue
 		"",           // consumer
@@ -36,34 +36,7 @@ func (c *Consumer) Consume() {
 
 	go func() {
 		for d := range msgs {
-			// log.Printf(c.Queue.Name+" received a message: %s", d.Body)
-			// // Introduce an artificial error
-			// if string(d.Body) == "error" {
-			// 	log.Printf("Failed to process message: %s", d.Body)
-			// 	if err := d.Nack(false, false); err != nil {
-			// 		log.Printf("Failed to nack message: %s", err)
-			// 	}
-			// 	continue
-			// }
-			// time.Sleep(time.Duration(rand.Intn(2000)) * time.Millisecond)
-			// if err := d.Ack(false); err != nil {
-			// 	log.Printf("Failed to acknowledge message: %s", err)
-			// }
-			go func(d amqp.Delivery) {
-				log.Printf(c.Queue.Name+" received a message: %s", d.Body)
-				// Introduce an artificial error
-				if string(d.Body) == "error" {
-					log.Printf("Failed to process message: %s", d.Body)
-					if err := d.Nack(false, false); err != nil {
-						log.Printf("Failed to nack message: %s", err)
-					}
-					return
-				}
-				time.Sleep(time.Duration(rand.Intn(2000)) * time.Millisecond)
-				if err := d.Ack(false); err != nil {
-					log.Printf("Failed to acknowledge message: %s", err)
-				}
-			}(d)
+			go callback(d, c.Queue.Name)
 		}
 	}()
 	log.Printf(c.Queue.Name + " is waiting for messages...")
