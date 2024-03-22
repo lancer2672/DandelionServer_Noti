@@ -2,14 +2,16 @@
 package main
 
 import (
+	"encoding/json"
 	"log"
 	"math/rand"
 	"time"
 
 	"github.com/lancer2672/DandelionServer_Noti/constants"
-	"github.com/lancer2672/DandelionServer_Noti/db"
+	"github.com/lancer2672/DandelionServer_Noti/db/model"
 	"github.com/lancer2672/DandelionServer_Noti/internal/firebase"
 	"github.com/lancer2672/DandelionServer_Noti/internal/rabbitmq"
+	"github.com/lancer2672/DandelionServer_Noti/services"
 	"github.com/lancer2672/DandelionServer_Noti/utils"
 	"github.com/rabbitmq/amqp091-go"
 )
@@ -19,7 +21,6 @@ func main() {
 	utils.FailOnError(err, "cannot load config file")
 
 	conn := rabbitmq.ConnectRabbitMQ(config.RABBITMQ_CONN)
-	db.Init(config.DB_SOURCE)
 	firebase.InitializeApp()
 
 	ch, err := conn.Channel()
@@ -74,21 +75,26 @@ func createDLXQueue(ch *amqp091.Channel) amqp091.Queue {
 }
 
 func notificationCallback(d amqp091.Delivery, queueName string) {
-	// Xử lý thông điệp từ notification queue
 	log.Printf("Received message from notification queue (%s): %s", queueName, d.Body)
-	time.Sleep(time.Duration(rand.Intn(2000)) * time.Millisecond)
+	// time.Sleep(time.Duration(rand.Intn(2000)) * time.Millisecond)
 	if err := d.Ack(false); err != nil {
 		log.Printf("Failed to acknowledge message: %s", err)
 	}
-	// Thực hiện xử lý dữ liệu và gửi đến Firebase, DB, vv.
+	var notification model.Notification
+	err := json.Unmarshal(d.Body, &notification)
+	if err != nil {
+		log.Printf("Failed to parse message: %s", err)
+		return
+	}
+	notiService := services.GetService()
+	log.Printf("Parsed message: %+v", notification)
+	notiService.AddNotification(notification)
 }
 
 func dlxCallback(d amqp091.Delivery, queueName string) {
-	// Xử lý thông điệp từ DLX queue
 	log.Printf("Received message from DLX queue (%s): %s", queueName, d.Body)
 	time.Sleep(time.Duration(rand.Intn(2000)) * time.Millisecond)
 	if err := d.Ack(false); err != nil {
 		log.Printf("Failed to acknowledge message: %s", err)
 	}
-	// Thực hiện các thao tác xử lý khác cho DLX, ví dụ như ghi log, cảnh báo, vv.
 }

@@ -16,15 +16,23 @@ var (
 )
 
 func initDB(dbSource string) *gorm.DB {
-	// Khởi tạo kết nối cơ sở dữ liệu ở đây
 	db, err := gorm.Open(postgres.Open(dbSource), &gorm.Config{})
 
 	if err != nil {
 		log.Fatalln(err)
 	}
 	log.Println("Connected to database")
-	db.Exec("CREATE TYPE notification_type AS ENUM ('chat', 'post', 'friend-request')")
-	db.AutoMigrate(&model.Notification{})
+	// Check if the type exists before creating it
+	var count int64
+	db.Raw("SELECT COUNT(*) FROM pg_type WHERE typname = 'notification_type'").Scan(&count)
+	if count == 0 {
+		db.Exec("CREATE TYPE notification_type AS ENUM ('chat', 'post', 'friend-request')")
+	} else {
+		log.Println("notification_type already exists")
+	}
+	if err := db.AutoMigrate(&model.Notification{}); err != nil {
+		log.Fatalln("Auto migration failed:", err)
+	}
 	return db
 }
 func GetDB() *gorm.DB {

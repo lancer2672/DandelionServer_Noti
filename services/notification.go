@@ -2,6 +2,7 @@ package services
 
 import (
 	"log"
+	"sync"
 
 	"github.com/lancer2672/DandelionServer_Noti/db/model"
 	"github.com/lancer2672/DandelionServer_Noti/db/repository"
@@ -11,10 +12,18 @@ type NotificationService struct {
 	Repo repository.NotificationRepositoryInterface
 }
 
-func NewNotificationService(repo repository.NotificationRepositoryInterface) *NotificationService {
-	return &NotificationService{
-		Repo: repo,
-	}
+var (
+	instance *NotificationService
+	once     sync.Once
+)
+
+func GetService() *NotificationService {
+	once.Do(func() {
+		instance = &NotificationService{
+			Repo: repository.GetRepo(),
+		}
+	})
+	return instance
 }
 
 func (s *NotificationService) AddNotification(notification model.Notification) error {
@@ -25,11 +34,11 @@ func (s *NotificationService) AddNotification(notification model.Notification) e
 	}
 	return nil
 }
+
 func (s *NotificationService) GetNotificationList() ([]model.Notification, error) {
 	list, err := s.Repo.GetNotificationList()
 	if err != nil {
 		log.Fatal("Get notification list failed", err)
-
 		return nil, err
 	}
 	return list, nil

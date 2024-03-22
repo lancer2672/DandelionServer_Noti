@@ -5,7 +5,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"time"
 
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -35,25 +37,31 @@ func (j JSON) Value() (driver.Value, error) {
 type NotificationType string
 
 const (
-	chat          NotificationType = "chat"
-	post          NotificationType = "post"
-	friendRequest NotificationType = "friend-request"
+	Chat          NotificationType = "chat"
+	Post          NotificationType = "post"
+	FriendRequest NotificationType = "friend-request"
 )
 
-func (st *NotificationType) Scan(value interface{}) error {
-	b, ok := value.([]byte)
-	if !ok {
-		*st = NotificationType(b)
+func (nt *NotificationType) Scan(value interface{}) error {
+	switch v := value.(type) {
+	case []byte:
+		*nt = NotificationType(v)
+	case string:
+		*nt = NotificationType(v)
+	default:
+		return errors.New("unsupported type for NotificationType")
 	}
+	fmt.Println("VALUE", *nt)
 	return nil
 }
-
-func (st NotificationType) Value() (driver.Value, error) {
-	return string(st), nil
+func (nt NotificationType) Value() (driver.Value, error) {
+	return string(nt), nil
 }
 
 type Notification struct {
-	gorm.Model
+	ID          uuid.UUID        `json:"id" gorm:"type:uuid;primary_key"`
+	CreatedAt   time.Time        `gorm:"default:CURRENT_TIMESTAMP"`
+	DeletedAt   gorm.DeletedAt   `gorm:"index" json:"-"`
 	Type        NotificationType `json:"type" gorm:"type:notification_type;default:'post'"`
 	Description string           `json:"description" gorm:"not null"`
 	Title       string           `json:"title" gorm:"default:''"`
@@ -61,4 +69,10 @@ type Notification struct {
 	ReceiverID  uint             `json:"receiverId" gorm:"not null"`
 	SenderID    uint             `json:"senderId" gorm:"not null"`
 	Payload     json.RawMessage  `json:"payload"`
+}
+
+func (u *Notification) BeforeCreate(tx *gorm.DB) (err error) {
+	u.ID = uuid.New()
+	//other check
+	return
 }
