@@ -11,6 +11,7 @@ import (
 type NotificationRepositoryInterface interface {
 	AddNotification(notification model.Notification) error
 	GetNotificationList() ([]model.Notification, error)
+	DeleteNotification(id int) error
 }
 
 var (
@@ -43,4 +44,8 @@ func (r *NotificationRepo) GetNotificationList() ([]model.Notification, error) {
 		return nil, result.Error
 	}
 	return notifications, nil
+}
+func (r *NotificationRepo) DeleteNotification(id int) error {
+	result := r.DB.Delete(&model.Notification{}, id)
+	return result.Error
 }

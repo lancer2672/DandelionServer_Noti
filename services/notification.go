@@ -58,3 +58,20 @@ func (s *NotificationService) GetNotificationList() ([]model.Notification, error
 	}
 	return list, nil
 }
+
+// @Summary Delete notification
+// @Description delete a notification
+// @Tags notifications
+// @Accept  json
+// @Produce  json
+// @Param id path int true "Notification ID"
+// @Success 200 {object} map[string]interface{}
+// @Router /notification/{id} [delete]
+func (s *NotificationService) DeleteNotification(id int) error {
+	err := s.Repo.DeleteNotification(id)
+	if err != nil {
+		log.Fatal("Delete notification failed", err)
+		return err
+	}
+	return nil
+}
