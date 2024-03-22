@@ -10,10 +10,11 @@ import (
 
 func main() {
 	config, err := utils.LoadConfig(".")
+
 	if err != nil {
 		log.Fatal("Cannot load config", err)
 	}
 	notiService := services.GetService()
-	server.ConfigServer(config, notiService)
-	server.StartServer(config.SERVER_ADDRESS)
+	mux := server.ConfigServer(config, notiService)
+	server.StartServer(config.SERVER_ADDRESS, mux)
 }

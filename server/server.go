@@ -4,32 +4,30 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/lancer2672/DandelionServer_Noti/services"
 	"github.com/lancer2672/DandelionServer_Noti/utils"
 )
 
-func ConfigServer(config utils.Config, s *services.NotificationService) {
-	http.HandleFunc("/notification", func(res http.ResponseWriter, req *http.Request) {
-		if req.Method == "GET" {
-			list, err := s.GetNotificationList()
-			if err != nil {
-				http.Error(res, err.Error(), http.StatusInternalServerError)
-			}
-			utils.JSONResponse(res, map[string]interface {
-			}{
-				"data":    list,
-				"message": "Success",
-			}, http.StatusOK)
-		} else {
-			http.Error(res, "Method not allowed", http.StatusMethodNotAllowed)
+func ConfigServer(config utils.Config, s *services.NotificationService) *chi.Mux {
+	r := chi.NewRouter()
+	r.Use(middleware.Logger)
+	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		list, err := s.GetNotificationList()
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
+		utils.JSONResponse(w, map[string]interface {
+		}{
+			"data":    list,
+			"message": "Success",
+		}, http.StatusOK)
 	})
-	http.HandleFunc("/", func(r http.ResponseWriter, req *http.Request) {
-		log.Println("no thing")
-	})
+	return r
 }
-func StartServer(addr string) {
-	err := http.ListenAndServe(addr, nil)
+func StartServer(addr string, router http.Handler) {
+	err := http.ListenAndServe(addr, router)
 	if err != nil {
 		log.Fatal("Server start failed", err)
 	}
