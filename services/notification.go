@@ -26,6 +26,14 @@ func GetService() *NotificationService {
 	return instance
 }
 
+// @Summary Add notification
+// @Description add a new notification
+// @Tags notifications
+// @Accept  json
+// @Produce  json
+// @Param notification body model.Notification true "Add new notification"
+// @Success 200 {object} map[string]interface{}
+// @Router /notification [post]
 func (s *NotificationService) AddNotification(notification model.Notification) error {
 	err := s.Repo.AddNotification(notification)
 	if err != nil {
@@ -35,6 +43,13 @@ func (s *NotificationService) AddNotification(notification model.Notification) e
 	return nil
 }
 
+// @Summary Get notifications
+// @Description get all notifications
+// @Tags notifications
+// @Accept  json
+// @Produce  json
+// @Success 200 {object} map[string]interface{}
+// @Router /notification [get]
 func (s *NotificationService) GetNotificationList() ([]model.Notification, error) {
 	list, err := s.Repo.GetNotificationList()
 	if err != nil {
