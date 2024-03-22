@@ -1,6 +1,9 @@
 package repository
 
 import (
+	"sync"
+
+	"github.com/lancer2672/DandelionServer_Noti/db"
 	model "github.com/lancer2672/DandelionServer_Noti/db/model"
 	"gorm.io/gorm"
 )
@@ -10,14 +13,22 @@ type NotificationRepositoryInterface interface {
 	GetNotificationList() ([]model.Notification, error)
 }
 
-type NotificationRepo struct {
-	DB *gorm.DB
+var (
+	instance *NotificationRepo
+	once     sync.Once
+)
+
+func GetRepo() NotificationRepositoryInterface {
+	once.Do(func() {
+		instance = &NotificationRepo{
+			DB: db.GetDB(),
+		}
+	})
+	return instance
 }
 
-func NewNotificationRepo(db *gorm.DB) NotificationRepositoryInterface {
-	return &NotificationRepo{
-		DB: db,
-	}
+type NotificationRepo struct {
+	DB *gorm.DB
 }
 
 func (r *NotificationRepo) AddNotification(notification model.Notification) error {

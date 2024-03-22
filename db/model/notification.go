@@ -54,11 +54,11 @@ func (st NotificationType) Value() (driver.Value, error) {
 
 type Notification struct {
 	gorm.Model
-	Type        NotificationType `gorm:"type:notification_type;default:'post'"`
-	Description string           `gorm:"not null"`
-	Title       string           `gorm:"default:''"`
-	IsSeen      bool             `gorm:"default:false"`
-	ReceiverID  uint             `gorm:"not null"`
-	SenderID    uint             `gorm:"not null"`
-	Payload     JSON             `gorm:"type:json"`
+	Type        NotificationType `json:"type" gorm:"type:notification_type;default:'post'"`
+	Description string           `json:"description" gorm:"not null"`
+	Title       string           `json:"title" gorm:"default:''"`
+	IsSeen      bool             `json:"isSeen" gorm:"default:false"`
+	ReceiverID  uint             `json:"receiverId" gorm:"not null"`
+	SenderID    uint             `json:"senderId" gorm:"not null"`
+	Payload     json.RawMessage  `json:"payload"`
 }
