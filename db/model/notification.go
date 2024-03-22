@@ -32,13 +32,33 @@ func (j JSON) Value() (driver.Value, error) {
 	return json.RawMessage(j).MarshalJSON()
 }
 
+type NotificationType string
+
+const (
+	chat          NotificationType = "chat"
+	post          NotificationType = "post"
+	friendRequest NotificationType = "friend-request"
+)
+
+func (st *NotificationType) Scan(value interface{}) error {
+	b, ok := value.([]byte)
+	if !ok {
+		*st = NotificationType(b)
+	}
+	return nil
+}
+
+func (st NotificationType) Value() (driver.Value, error) {
+	return string(st), nil
+}
+
 type Notification struct {
 	gorm.Model
-	Type        string `gorm:"type:enum('chat','post','friend-request');not null"`
-	Description string `gorm:"not null"`
-	Title       string `gorm:"default:''"`
-	IsSeen      bool   `gorm:"default:false"`
-	ReceiverID  uint   `gorm:"not null"`
-	SenderID    uint   `gorm:"not null"`
-	Payload     JSON   `gorm:"type:json"`
+	Type        NotificationType `gorm:"type:notification_type;default:'post'"`
+	Description string           `gorm:"not null"`
+	Title       string           `gorm:"default:''"`
+	IsSeen      bool             `gorm:"default:false"`
+	ReceiverID  uint             `gorm:"not null"`
+	SenderID    uint             `gorm:"not null"`
+	Payload     JSON             `gorm:"type:json"`
 }

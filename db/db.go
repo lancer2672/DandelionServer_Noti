@@ -15,6 +15,7 @@ func Init(dbSource string) *gorm.DB {
 		log.Fatalln(err)
 	}
 	log.Println("Connected to database")
+	db.Exec("CREATE TYPE notification_type AS ENUM ('chat', 'post', 'friend-request')")
 	db.AutoMigrate(&model.Notification{})
 
 	return db
